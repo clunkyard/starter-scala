@@ -1,0 +1,30 @@
+{
+  "version": "v2.0.0-kit.1",
+  "sdkVersion": "2.0.0",
+  "language": "scala",
+  "portable": false,
+  "engine": {
+    "file": "clunkyard-engine-v2.0.0-kit.1.tar.gz",
+    "url": "https://github.com/clunkyard/game-kit/releases/download/v2.0.0-kit.1/clunkyard-engine-v2.0.0-kit.1.tar.gz",
+    "bytes": 7071301,
+    "sha256": "0b9cfa6958a952c32388602821ec4275e61400255f91b212f9c2a9220f8a0d86",
+    "expandedBytes": 33794538
+  },
+  "sdk": {
+    "file": "clunkyard-sdk-scala-linux-x64-v2.0.0-kit.1.tar.gz",
+    "url": "https://github.com/clunkyard/game-kit/releases/download/v2.0.0-kit.1/clunkyard-sdk-scala-linux-x64-v2.0.0-kit.1.tar.gz",
+    "bytes": 753644,
+    "sha256": "faf406c7277b71eca09ecd05e2cf483c1a73f11edc314c07e3ff918b893118f5",
+    "expandedBytes": 3895306
+  },
+  "rebuildBindings": [
+    "java",
+    "scala"
+  ],
+  "tools": [
+    "node",
+    "make",
+    "scalac",
+    "java"
+  ]
+}
