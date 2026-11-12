@@ -93,26 +93,9 @@ class Bot extends Robot {
       val climb = if (zone.shape() == Shape.SPHERE) angles().elevationTo(position, zone.center()) else 0.0
       drive().set(0.8, angles().clamp(angles().angleDiff(angles().bearingTo(position, zone.center()), self.heading()) / 30), angles().clamp((climb - self.pitch()) / 30))
     }
-    val work = raw().number("state.calibration.work").orElse(0).toLong
-    if (work > 0) status().set("WORK", Bot.calibrationWork(work, clock().tick()).toDouble)
   }
 }
 
 object Bot {
   def main(args: Array[String]): Unit = Clunkyard.run(new Bot)
-  // The calibration kernel, xorshift-sqrt v1: work rounds of a 64-bit
-  // xorshift and a square-root sum.
-  def calibrationWork(work: Long, tick: Long): Long = {
-    var x = 88172645463325252L ^ tick
-    var sum = 0.0
-    var i = 0L
-    while (i < work) {
-      x ^= x << 13
-      x ^= x >>> 7
-      x ^= x << 17
-      sum += math.sqrt((x >>> 11).toDouble)
-      i += 1
-    }
-    (math.floor(sum).toLong + (x >>> 40)) % 1000000
-  }
 }
