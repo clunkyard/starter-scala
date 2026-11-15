@@ -6,7 +6,8 @@
 // clock: tick seconds remaining_ticks
 // arena: size gravity terrain_kind ground_height(x y)
 // me: health position velocity heading pitch roll angular_velocity
-//   attitude grounded altitude applied
+//   attitude grounded altitude applied hull_mounts to_mount(heading pitch)
+//   from_mount(heading pitch) mount_toward(point)
 // battery: charge capacity regen sustainable_drive compute
 //   drive_cost(fraction)
 // drive: hover_lift
@@ -28,7 +29,8 @@
 // score: me best armour
 // angles: normalize(degrees) angle_diff(target current)
 //   bearing_to(from to) elevation_to(from to) direction(heading pitch)
-//   distance(a b) clamp(value low high)
+//   distance(a b) to_chassis(heading pitch attitude)
+//   from_chassis(heading pitch attitude) clamp(value low high)
 // raw: number(path) text(path) has(path) flag(path) count(path) line()
 // Controls: drive.set(throttle turn pitch_turn)
 //   drive.forces(thrust strafe lift yaw_torque pitch_torque roll_torque brake)
@@ -41,8 +43,11 @@
 // axis; pitch is positive up.
 // Manual: https://clunkyard.com/manual#sdk
 import clunkyard._
+import scala.collection.JavaConverters._
 
 class Bot extends Robot {
+  private var dodges = 0
+  private var dodgeEnd = 0
   private def steer(towards: Double, current: Double): Double = angles().clamp(angles().angleDiff(towards, current) / 45)
   override def onTurn(): Unit = {
     val self = me()
@@ -58,6 +63,7 @@ class Bot extends Robot {
       drive().set(throttle, steer(target.bearing(), self.heading()), steer(target.elevation(), self.pitch()))
       scanner.set(target.bearing(), 20, target.elevation())
       val power = gun.powerForFlightTime(target.range(), 1)
+      // gun.lead is the intercept if the target holds course.
       val aim = gun.lead(target, power).orElse(null)
       val heading = if (aim == null) target.bearing() else aim.heading()
       val pitch = if (aim == null) target.elevation() else aim.pitch()
@@ -81,6 +87,21 @@ class Bot extends Robot {
       val pitch = if (free) ((clock().tick() / 10) % 3 - 1) * 35.0 else 0.0
       scanner.set(angles().normalize(scanner.last().heading() + 36), 40, pitch)
       status().set("SEARCH")
+    }
+    // A simple dodge: vary it, or predict the shooter.
+    val tick = clock().tick()
+    if (tick >= dodgeEnd && sensors().cues().asScala.exists(_.source() == Source.MUZZLE)) {
+      dodges += 1
+      dodgeEnd = tick + 10
+    }
+    if (tick < dodgeEnd) {
+      // Off the line of fire: left, then right next time (turn is positive left, strafe positive right).
+      val left = dodges % 2 == 1
+      if (this.`match`().control() == Control.FORCES) {
+        drive().set(Drive.throttle(0.5))
+        drive().forces(Drive.strafe(if (left) -1 else 1))
+      } else drive().set(1, if (left) 1 else -1)
+      status().set(if (left) "dodge:left" else "dodge:right", dodges)
     }
     if (battery().charge() < battery().capacity() / 4) drive().set(Drive.throttle(drive().get("throttle").orElse(0) * 0.5))
     val storm = nav().storm().orElse(null)
